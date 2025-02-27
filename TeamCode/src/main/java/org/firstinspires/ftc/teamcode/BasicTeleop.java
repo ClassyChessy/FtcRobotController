@@ -66,70 +66,37 @@ public class BasicTelop extends LinearOpMode {
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
+
+        // will eentually have to name this system but not today. 
         leftFrontDrive  = hardwareMap.get(DcMotor.class, "fl");
         leftBackDrive  = hardwareMap.get(DcMotor.class, "bl");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "fr");
         rightBackDrive = hardwareMap.get(DcMotor.class, "br");
-        intakeMotor  = hardwareMap.get(DcMotor.class, "intake");
-        lslidesMotor  = hardwareMap.get(DcMotor.class, "lslides");
-        rslidesMotor  = hardwareMap.get(DcMotor.class, "rslides");
-        hslidesMotor  = hardwareMap.get(DcMotor.class, "hslides");
+        lExtensionMotor  = hardwareMap.get(DcMotor.class, "lem");
+        rExtensionMotor  = hardwareMap.get(DcMotor.class, "rem");
+        lAngleMotor  = hardwareMap.get(DcMotor.class, "lam");
+        rAngleMotor  = hardwareMap.get(DcMotor.class, "ram");
+        
         //vslidesMotor = hardwareMap.get(DcMotor.class, "vslides");
-        transferM = hardwareMap.get(Servo.class, "transfer");
-        rpivotM = hardwareMap.get(Servo.class, "rpivot");
-        lpivotM = hardwareMap.get(Servo.class, "lpivot");
-        intakePivAM = hardwareMap.get(Servo.class, "intakePivA");
-        intakePivBM = hardwareMap.get(Servo.class, "intakePivB");
-        hlockM = hardwareMap.get(Servo.class, "hlock");
-        larmM = hardwareMap.get(Servo.class, "larm");
-        rarmM = hardwareMap.get(Servo.class, "rarm");
-        elbowM = hardwareMap.get(Servo.class, "elbow");
-        clawM = hardwareMap.get(Servo.class, "claw");
-        lhang = hardwareMap.get(CRServo.class, "lhang");
-        rhang = hardwareMap.get(CRServo.class, "rhang");
+        elbow = hardware.get(Servo.class, "aP");
+        lClaw = hardware.get(Servo.class, "lc");
+        rClaw = hardware.get(Servo.class, "rc");
+
         //initialize motor directions
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        intakeMotor.setDirection(DcMotor.Direction.FORWARD);
-        rslidesMotor.setDirection(DcMotor.Direction.FORWARD);
-        lslidesMotor.setDirection(DcMotor.Direction.FORWARD);
+        rExtensionMotor.setDirection(DcMotor.Direction.FORWARD);
+        lExtensionMotor.setDirection(DcMotor.Direction.REVERSE);
+        rAngleMotor.setDirection(DcMotor.Direction.FORWARD);
+        lAngleMotor.setDirection(DcMotor.Direction.REVERSE);
 
-
-        lhang.setDirection(CRServo.Direction.REVERSE);
-        Encoder par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "fr")));
-        Encoder perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "br")));
-       hslidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        lslidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rslidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         //initialize toggle servos (servos that go between angles at the press of a button)
         sleep(10);
 
-        ToggleServo intakePivA = new ToggleServo(intakePivAM, new int[]{15, 130, 215}, Servo.Direction.FORWARD);
-        ToggleServo intakePivB = new ToggleServo(intakePivBM, new int[]{15, 130, 215}, Servo.Direction.REVERSE);
-        ToggleServo hlock = new ToggleServo(hlockM, new int[]{120, 40}, Servo.Direction.REVERSE);
-        ToggleServo larm = new ToggleServo(larmM, new int[]{20, 80, 280, 250, 230}, Servo.Direction.FORWARD, 20);
-        ToggleServo rarm = new ToggleServo(rarmM, new int[]{20, 80, 280, 250, 230}, Servo.Direction.REVERSE, 20);
-        ToggleServo elbow = new ToggleServo(elbowM, new int[]{10, 130, 0, 100, 210}, Servo.Direction.REVERSE, 10);
-        ToggleServo rpivot = new ToggleServo(rpivotM, new int[]{0, 55}, Servo.Direction.FORWARD, 0);
-        ToggleServo lpivot = new ToggleServo(lpivotM, new int[]{0, 55}, Servo.Direction.REVERSE, 0);
-        ToggleServo claw = new ToggleServo(clawM, new int[]{2, 200}, Servo.Direction.REVERSE, 2);
-        ToggleServo transfer = new ToggleServo(transferM, new int[]{0, 90}, Servo.Direction.FORWARD, 2);
-        //elbow 150, 100, 85, 360
-        // larm rarm 0, 80, 160, 330
-//ARM ORIGINAL
-        //30, 110, 135
-        //30, 110, 135
-
-        //ELBOW ORIGINAL
-        //30, 100, 220
-
-
-        // PIVOTS ORIGINAL
-        //40,  83, 100
-        //42, 82, 99
+        ToggleServo leftClawServo = new ToggleServo(lClaw, new int[]{15, 215}, Servo.Direction.FORWARD);
+        ToggleServo rightClawServo = new ToggleServo(rClaw, new int[]{15, 215}, Servo.Direction.REVERSE);
 
 
         // Wait for the game to start (driver presses START)
@@ -162,13 +129,8 @@ public class BasicTelop extends LinearOpMode {
         boolean left2Pressed = false;
 
         //other variables used in teleop
-        // added rslidesPower and lslidesPower
-        double hslidesPower = 0;
-        double vslidesPower = 0;
-        double handPower = 0;
-        int intakeDirection = -1;
-        boolean intakeOn = false;
-        boolean intakeSuckOn = false;
+        // gamepad 1 is for basically all possible arm and angle and grabbing, gamepad 2 is for all motion and driving. 
+        boolean intake = false;
         double driveSensitivity = 1;
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -204,33 +166,22 @@ public class BasicTelop extends LinearOpMode {
             leftBackDrive.setPower(leftBackPower * driveSensitivity);
             rightBackDrive.setPower(rightBackPower * driveSensitivity);
 
-            //horizontal slides control
-            if(gamepad2.left_trigger > 0.01 && gamepad2.right_trigger > 0.01) vslidesPower = 0;
-            else if(gamepad2.left_trigger > 0.01) vslidesPower = -gamepad2.left_trigger;
-            else if(gamepad2.right_trigger > 0.01) vslidesPower = gamepad2.right_trigger;
-            else vslidesPower = 0;
-            //horizontal slides control
-            if(gamepad1.left_trigger > 0.01 && gamepad1.right_trigger > 0.01) hslidesPower = 0;
-            else if(gamepad1.left_trigger > 0.01) hslidesPower = gamepad1.left_trigger;
-            else if(gamepad1.right_trigger > 0.01) hslidesPower = -gamepad1.right_trigger;
-            else hslidesPower = 0;
-
-            //slides power
-            rslidesMotor.setPower(vslidesPower);
-            lslidesMotor.setPower(vslidesPower);
-            hslidesMotor.setPower(hslidesPower);
             //motor intake
-            double intakeSpeed = 1.0;
-            if(gamepad1.left_bumper && !lb1Pressed) intakeDirection *= -1;
-            if(gamepad1.right_bumper && !rb1Pressed) {
-                intakeOn = !intakeOn;
-                intakeDirection = -1;
-//                if(transfer.pos != 0) transfer.toggle();
+            if (gamepad1.x && intake) {
+                leftClawServo.ToggleRight();
+                rightClawServe.ToggleRight();
+                intake = false;
+            }
+            else if (gamepad1.x && !intake) {
+                leftClawServo.ToggleLeft();
+                rightClawServe.ToggleLeft();
+                intake = true;
             }
 
-            if(gamepad2.right_bumper && !rb2Pressed){
+            if(gamepad1.right_bumper && !rb1Pressed){
                 lhang.setPower(1);
                 rhang.setPower(1);
+                rb1Pressed = true;
             }
             if(gamepad2.left_bumper && !rb2Pressed){
                 lhang.setPower(0);
