@@ -90,8 +90,8 @@ public class BasicTelop extends LinearOpMode {
         rExtensionMotor.setDirection(DcMotor.Direction.FORWARD);
         lExtensionMotor.setDirection(DcMotor.Direction.REVERSE);
         rAngleMotor.setDirection(DcMotor.Direction.FORWARD);
-        lAngleMotor.setDirection(DcMotor.Direction.REVERSE);
-
+        lAngleMotor.setDirection(DcMotor.Direction.FORWARD); // can't tell what reverse is basically.
+        
         //initialize toggle servos (servos that go between angles at the press of a button)
         sleep(10);
 
@@ -132,6 +132,10 @@ public class BasicTelop extends LinearOpMode {
         // gamepad 1 is for basically all possible arm and angle and grabbing, gamepad 2 is for all motion and driving. 
         boolean intake = false;
         double driveSensitivity = 1;
+        int left_angle_dir = 1;
+        int right_angle_dir = -1;
+        boolean angle_brake = false;
+        boolean extension_brake = false;
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
@@ -167,89 +171,60 @@ public class BasicTelop extends LinearOpMode {
             rightBackDrive.setPower(rightBackPower * driveSensitivity);
 
             //motor intake
-            if (gamepad1.x && intake) {
-                leftClawServo.ToggleRight();
-                rightClawServe.ToggleRight();
+            if (gamepad2.x && intake) {
+                leftClawServo.toggle();
+                rightClawServe.toggle();
                 intake = false;
             }
-            else if (gamepad1.x && !intake) {
-                leftClawServo.ToggleLeft();
-                rightClawServe.ToggleLeft();
+            else if (gamepad2.x && !intake) {
+                leftClawServo.toggle();
+                rightClawServe.toggle();
                 intake = true;
             }
 
-            if(gamepad1.right_bumper && !rb1Pressed){
-                lhang.setPower(1);
-                rhang.setPower(1);
+            if(gamepad2.right_bumper && !rb12ressed){
+                left_angle_dir = 1;
+                right_angle_dir = -1;
                 rb1Pressed = true;
             }
-            if(gamepad2.left_bumper && !rb2Pressed){
-                lhang.setPower(0);
-                rhang.setPower(0);
+            else if (gamepad2.right_bumper && rb2Pressed) {
+                left_angle_dir = -1;
+                right_angle_dir = 1;
+                rb1Pressed = false;
             }
-            if(gamepad2.left_trigger > 0.1 && gamepad2.right_trigger > 0.1){
-                lhang.setPower(-1);
-                rhang.setPower(-1);
-            }
-            if(intakeOn){
-                intakeMotor.setPower(intakeDirection < 0 ? intakeDirection * intakeSpeed : intakeDirection * 0.6);
-            }
-            else{
-                intakeMotor.setPower(0);
-            }
-
-            //toggle servos inputs
-            if(gamepad1.a && !a1Pressed && !gamepad1.start){
-                intakePivA.toggleRight();
-                intakePivB.toggleRight();
-            }
-            if(gamepad1.b && !b1Pressed) {
-                intakePivA.toggleLeft();
-                intakePivB.toggleLeft();
-            }
-            if((gamepad2.x && !x2Pressed)) transfer.toggle();
-
-            if(gamepad1.y && !y1Pressed) hlock.toggle();
-
-            if(gamepad2.dpad_left && !left2Pressed){
-                larm.toggleLeft();
-                rarm.toggleLeft();
-                elbow.toggleLeft();
-            }
-            if(gamepad2.dpad_right && !right2Pressed){
-                larm.toggleRight();
-                rarm.toggleRight();
-                elbow.toggleRight();
-            }
-            if(gamepad2.a && !a2Pressed) {
-                claw.toggle();
-            }
-            if(gamepad2.dpad_up && !up2Pressed) {
-                lpivot.toggleRight();
-                rpivot.toggleRight();
-                if(larm.pos > 2 && rarm.pos > 2) {
-                    while (larm.pos != 2) {
-                        larm.toggleLeft();
-                        rarm.toggleLeft();
-                    }
+            if(gamepad2.left_bumper && gamepad2.right_bumper){
+                if (!angle_brake) {
+                    lAngleMotor.setPower(0);
+                    rAngleMotor.setPower(0);
+                    angle_brake = true;
                 }
-                if(larm.pos < 2 && rarm.pos < 2) {
-                    while (larm.pos != 2) {
-                        larm.toggleRight();
-                        rarm.toggleRight();
-                    }
+                else {
+                    angle_brake = false;
                 }
             }
-            if(gamepad2.dpad_down && !down2Pressed) {
-                rpivot.toggleLeft();
-                lpivot.toggleLeft();
-                if(larm.pos > 0 && rarm.pos > 0) {
-                    while (larm.pos != 0) {
-                        larm.toggleLeft();
-                        rarm.toggleLeft();
-                    }
+            if(gamepad2.right_trigger > 0.1){
+                // basically have the DC motor go based on the gampad max value... i assume its one....
+                static int MAX_RIGHT_TRIGGER = 1; //hoenstly i have no clue baically.
+                    // now scale the thing till it reaches the value. 
+                if (!angle_brake) {
+                    lAngleMotor.setPower(left_angle_dir * gamepad2.right_trigger/MAX_RIGHT_TRIGGER);
+                    lAngleMotor.setPower(right_angle_dir * gamepad2.right_trigger/MAX_RIGHT_TRIGGER);
                 }
             }
+
+            if (gamepad2.y && !extension_brake) {
+                // should i hard code a max extension? 
+                // why not honestly.
+                // send it
+                lExtensionMotor.setPower(1);
+                rExtensionMotor.setPower(1);
+            }
+            if (gamepad2.a && extension_brake) {
+                lExtensionMotor.setPower(-1);
+                rExtensionMotor.setPower(-1);
+            }
+            
+           
 
             //update all button states
             b1Pressed = gamepad1.b;
